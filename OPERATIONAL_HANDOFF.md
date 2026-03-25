@@ -9,12 +9,12 @@ Last updated: 2026-03-25 | Status: AUTONOMOUS
 | Field | Value |
 |-------|-------|
 | Project name | noosphere-v2 |
-| Supabase project ID | `isfhndnwydnqbmvixddm` |
-| Supabase URL | `https://isfhndnwydnqbmvixddm.supabase.co` |
+| Supabase project ID | `bdpvvclndurhuzxzrlma` |
+| Supabase URL | `https://bdpvvclndurhuzxzrlma.supabase.co` |
 | Cosmos Canvas | `/Users/trumac/Desktop/NOOSPHEREV2/cosmos-canvas.html` |
-| Cosmos Map API | `https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/serve-cosmos-map` |
-| Alert API | `https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/send-alerts` |
-| Vanguard API | `https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/run-vanguard-batch` |
+| Cosmos Map API | `https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/serve-cosmos-map` |
+| Alert API | `https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/send-alerts` |
+| Vanguard API | `https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/run-vanguard-batch` |
 | Daemon script | `noosphere_daemon.py` |
 | Workflow | `.github/workflows/noosphere-daemon.yml` |
 
@@ -55,15 +55,15 @@ Last updated: 2026-03-25 | Status: AUTONOMOUS
 
 **Verifying the Cosmos Map API:**
 ```bash
-curl https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/serve-cosmos-map | jq '.total_nodes'
+curl https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/serve-cosmos-map | jq '.total_nodes'
 # Expected: 984
 
-curl "https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/serve-cosmos-map?domain=technology" | jq '.trust_scores'
+curl "https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/serve-cosmos-map?domain=technology" | jq '.trust_scores'
 ```
 
 **Verifying the Alert API:**
 ```bash
-curl https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/send-alerts | jq '.health'
+curl https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/send-alerts | jq '.health'
 # Current: "ALERTS_ACTIVE" (known state: Finance T1, failure clusters from Phase 6)
 ```
 

@@ -1,13 +1,13 @@
 # NOOSPHERE v2 — Database Migration Guide
-**From: bdpvvclndurhuzxzrlma (retired)**
-**To: isfhndnwydnqbmvixddm (your project)**
+**Reference backup only — data already live at: bdpvvclndurhuzxzrlma**
+**DO NOT run against the live project — these files are a portable backup.**
 
 ---
 
 ## Overview
 
 Run the 5 SQL files in order using the **Supabase SQL Editor** at:
-`https://supabase.com/dashboard/project/isfhndnwydnqbmvixddm/sql/new`
+`https://supabase.com/dashboard/project/bdpvvclndurhuzxzrlma/sql/new`
 
 Each file is idempotent (`ON CONFLICT DO NOTHING`) — safe to re-run if something fails.
 
@@ -78,7 +78,7 @@ Inserts all 984 claims (the full NOOSPHERE corpus):
 > **Option A:** Paste in batches. The file has 10 labeled batches (100 rows each).
 > **Option B:** Use the Supabase CLI:
 > ```bash
-> psql "postgresql://postgres:[password]@db.isfhndnwydnqbmvixddm.supabase.co:5432/postgres" -f migration/05_claims_data.sql
+> psql "postgresql://postgres:[password]@db.bdpvvclndurhuzxzrlma.supabase.co:5432/postgres" -f migration/05_claims_data.sql
 > ```
 > Find the database password at: Dashboard → Settings → Database → Connection string
 
@@ -130,7 +130,7 @@ After the SQL migration, deploy the two API Edge Functions via the **Supabase Da
 ### Option B: Supabase CLI
 ```bash
 npm install -g supabase
-supabase link --project-ref isfhndnwydnqbmvixddm
+supabase link --project-ref bdpvvclndurhuzxzrlma
 supabase functions deploy serve-cosmos-map --no-verify-jwt
 supabase functions deploy send-alerts --no-verify-jwt
 ```
@@ -143,7 +143,7 @@ After migration, update these secrets in the repo → Settings → Secrets:
 
 | Secret | New Value |
 |--------|-----------|
-| `SUPABASE_URL` | `https://isfhndnwydnqbmvixddm.supabase.co` |
+| `SUPABASE_URL` | `https://bdpvvclndurhuzxzrlma.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | *(your service role key — already provided)* |
 | `ANTHROPIC_API_KEY` | *(your Anthropic API key)* |
 
@@ -156,7 +156,7 @@ The `SUPABASE_SERVICE_ROLE_KEY` will be set once confirmed.
 
 | Endpoint | URL |
 |----------|-----|
-| Cosmos Map API | `https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/serve-cosmos-map` |
-| Alert API | `https://isfhndnwydnqbmvixddm.supabase.co/functions/v1/send-alerts` |
+| Cosmos Map API | `https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/serve-cosmos-map` |
+| Alert API | `https://bdpvvclndurhuzxzrlma.supabase.co/functions/v1/send-alerts` |
 
 Update `OPERATIONAL_HANDOFF.md` and `cosmos-canvas.html` with these new URLs after deployment.
