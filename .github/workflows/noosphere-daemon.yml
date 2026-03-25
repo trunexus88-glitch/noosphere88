@@ -1,0 +1,67 @@
+name: Noosphere Pipeline Daemon
+
+on:
+  schedule:
+    # Run at 06:00 UTC and 18:00 UTC every day
+    - cron: '0 6,18 * * *'
+  workflow_dispatch:
+    # Manual trigger with optional step override
+    inputs:
+      step:
+        description: 'Run only this step (1-13), leave blank for full cycle'
+        required: false
+        type: string
+      health_only:
+        description: 'Health check only (no pipeline)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  pipeline:
+    name: Pipeline Cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+      DAEMON_BATCH_SIZE: '20'
+      DAEMON_PROMOTION_THRESHOLD: '0.90'
+      DAEMON_AUDIT_SAMPLE_RATE: '0.10'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install supabase anthropic
+
+      - name: Run health check
+        if: ${{ inputs.health_only == true }}
+        run: python noosphere_daemon.py --health
+
+      - name: Run pipeline cycle (full)
+        if: ${{ inputs.health_only != true && inputs.step == '' }}
+        run: python noosphere_daemon.py
+
+      - name: Run pipeline step
+        if: ${{ inputs.health_only != true && inputs.step != '' }}
+        run: python noosphere_daemon.py --step ${{ inputs.step }}
+
+      - name: Upload cycle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cycle-log-${{ github.run_id }}
+          path: /tmp/noosphere-*.log
+          if-no-files-found: ignore
+          retention-days: 30

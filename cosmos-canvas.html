@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOOSPHERE v2 — Cosmos Canvas (Phase 6)</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0D1117; color: #E6EDF3; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; overflow: hidden; }
+  .canvas-container { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+  .tier2-banner {
+    background: linear-gradient(90deg, #0a2a0a 0%, #0d3d0d 40%, #0a2a0a 100%);
+    border-bottom: 1px solid #2ea043;
+    padding: 6px 16px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .tier2-badge {
+    background: #2ea043; color: #fff; font-weight: 700;
+    padding: 2px 10px; border-radius: 12px; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .tier1-demotion-badge {
+    background: rgba(255,93,56,0.18); border: 1px solid #FF5D38;
+    color: #FF5D38; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; font-size: 10px; letter-spacing: 0.3px; white-space: nowrap;
+  }
+  .tier2-stat { color: #7ee787; font-size: 11px; white-space: nowrap; }
+  .tier2-stat span { color: #fff; font-weight: 600; }
+  .tier2-stat.t1 { color: #FF8C6B; }
+  .tier2-stat.t1 span { color: #FF5D38; }
+  .tier2-sep { color: #2ea043; }
+  .autonomous-badge {
+    margin-left: auto;
+    background: rgba(0,217,255,0.08); border: 1px solid rgba(0,217,255,0.35);
+    color: #00D9FF; padding: 2px 10px; border-radius: 10px; font-size: 11px; white-space: nowrap;
+  }
+  .controls {
+    background: #161B22; border-bottom: 1px solid #30363D;
+    padding: 6px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  .ctrl-group { display: flex; align-items: center; gap: 6px; }
+  .ctrl-label { color: #8B949E; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .toggle-btn {
+    padding: 3px 10px; border-radius: 6px; border: 1px solid #30363D;
+    background: #21262D; color: #8B949E; cursor: pointer; font-size: 11px; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .toggle-btn.active { color: #fff; border-color: currentColor; }
+  .toggle-btn.finance.active { background: rgba(68,136,255,0.15); border-color: #4488FF; color: #4488FF; }
+  .toggle-btn.science.active { background: rgba(255,136,68,0.15); border-color: #FF8844; color: #FF8844; }
+  .toggle-btn.technology.active { background: rgba(170,68,255,0.15); border-color: #AA44FF; color: #AA44FF; }
+  .toggle-btn.jarvis.active { background: rgba(255,215,0,0.12); border-color: #FFD700; color: #FFD700; }
+  .toggle-btn.adversarial.active { background: rgba(0,217,255,0.1); border-color: #00D9FF; color: #00D9FF; }
+  .toggle-btn.conflict.active { background: rgba(255,107,107,0.1); border-color: #FF6B6B; color: #FF6B6B; }
+  .toggle-btn:hover { background: #30363D; }
+  .divider { width: 1px; height: 18px; background: #30363D; flex-shrink: 0; }
+  .stats-bar { display: flex; gap: 6px; margin-left: auto; }
+  .stat-pill {
+    padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  }
+  .stat-confirmed { background: rgba(46,160,67,0.2); color: #56d364; border: 1px solid rgba(46,160,67,0.3); }
+  .stat-invalidated { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.25); }
+  .stat-unverified { background: rgba(139,148,158,0.15); color: #8B949E; border: 1px solid rgba(139,148,158,0.2); }
+  .main-area { flex: 1; display: flex; min-height: 0; }
+  .svg-area { flex: 1; position: relative; overflow: hidden; }
+  .side-panel {
+    width: 218px; background: #161B22; border-left: 1px solid #30363D;
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  .panel-section { padding: 10px; border-bottom: 1px solid #30363D; }
+  .panel-title { color: #8B949E; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .trust-bar-row { margin-bottom: 7px; }
+  .trust-bar-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
+  .trust-bar-name { font-size: 11px; }
+  .trust-bar-val { font-size: 11px; font-weight: 700; }
+  .trust-bar-track { height: 5px; background: #21262D; border-radius: 3px; overflow: visible; position: relative; }
+  .trust-bar-fill { height: 100%; border-radius: 3px; }
+  .outcome-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .outcome-bar-track { flex: 1; height: 4px; background: #21262D; border-radius: 2px; overflow: hidden; }
+  .outcome-bar-fill { height: 100%; border-radius: 2px; }
+  .outcome-count { color: #8B949E; font-size: 10px; min-width: 26px; text-align: right; }
+  .inspect-empty { color: #8B949E; font-size: 11px; text-align: center; padding-top: 16px; }
+  .inspect-field { margin-bottom: 6px; }
+  .inspect-key { color: #8B949E; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .inspect-val { color: #E6EDF3; font-size: 11px; word-break: break-all; }
+  .inspect-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; margin-top: 2px; }
+  .badge-confirmed { background: rgba(46,160,67,0.2); color: #56d364; }
+  .badge-invalidated { background: rgba(248,81,73,0.15); color: #f85149; }
+  .badge-unverified { background: rgba(139,148,158,0.15); color: #8B949E; }
+  .badge-jarvis { background: rgba(255,215,0,0.12); color: #FFD700; border: 1px solid rgba(255,215,0,0.3); }
+  .badge-adv { background: rgba(0,217,255,0.1); color: #00D9FF; border: 1px solid rgba(0,217,255,0.3); }
+  .tooltip {
+    position: fixed; background: #1C2128; border: 1px solid #30363D;
+    border-radius: 6px; padding: 7px 10px; font-size: 11px; max-width: 220px;
+    pointer-events: none; z-index: 1000; box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+  .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 10px; color: #8B949E; }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .legend-ring { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #FFD700; flex-shrink: 0; background: transparent; }
+  .pipeline-row {
+    font-size: 9px; color: #484F58; line-height: 1.5;
+    border-top: 1px solid #21262D; padding-top: 5px; margin-top: 4px;
+  }
+  .pipeline-step { color: #8B949E; }
+  .pipeline-step.adv { color: #00D9FF; }
+  .pipeline-arrow { color: #30363D; }
+  .footer-bar {
+    background: #0D1117; border-top: 1px solid #30363D;
+    padding: 4px 12px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    font-size: 10px; color: #8B949E; overflow: hidden;
+  }
+  .footer-val { color: #E6EDF3; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useCallback, useMemo, useEffect } = React;
+
+// ─── CORPUS DATA — PHASE 6 ────────────────────────────────────────────────────
+const TRUST = {
+  finance:    { score: 0.8482, decisions: 336, resolution: 1.0000, tier: 1, p5score: 0.8542 },
+  science:    { score: 0.8794, decisions: 282, resolution: 1.0000, tier: 2, p5score: 0.8585 },
+  technology: { score: 0.8934, decisions: 366, resolution: 1.0000, tier: 2, p5score: 0.8592 },
+};
+const OUTCOMES = {
+  finance:    { confirmed: 285, invalidated: 51,  unverified: 0, total: 336 },
+  science:    { confirmed: 248, invalidated: 34,  unverified: 0, total: 282 },
+  technology: { confirmed: 327, invalidated: 39,  unverified: 0, total: 366 },
+};
+const DOMAIN_COLORS = { finance: '#4488FF', science: '#FF8844', technology: '#AA44FF' };
+const DOMAIN_NAMES  = ['finance','science','technology'];
+// Cluster centers as fractions of SVG viewport
+const CLUSTER_CX = { finance: 0.22, science: 0.50, technology: 0.78 };
+const CLUSTER_CY = 0.50;
+const BASE_RADIUS = 0.155; // fraction of width
+
+// jarvis_tier2 + adversarial_survived promoted claim IDs (53 total — Phase 6)
+// Distribution: finance=1 (idx 0), science=7 (idx 1-7), technology=45 (idx 8-52)
+const TIER2_IDS = new Set([
+  '1492282c-d4c8-46ce-a269-d1a22a07a5e9',
+  '3729f484-7a6e-49c5-b6d4-98f084d636e8',
+  'd021fe69-17d4-4735-b02d-f38a52556d40',
+  '6255fb83-fe9c-4def-8385-81e24970b3ea',
+  'fdeb460f-244c-4b92-975a-e4fa5a819acf',
+  'c6159c4f-f5eb-41d4-9c5f-e9bec52aea79',
+  '77cf000e-bb5c-47de-937b-a66a14afb899',
+  'eb9cc736-96b6-4efe-96d6-f4f2886a1aef',
+  '96fafc95-cfe8-40b0-93bb-46b6015daa42',
+  '09903bce-f6fe-4597-b738-defac9a36ea6',
+  '756916c1-1f69-4150-81b6-bed9fc5aa62b',
+  '2c17259b-5a04-4731-826a-61eedb58dcd2',
+  '7f5f3ff7-a2d3-49cc-9cc5-6f431bce66ab',
+  '2470d756-5101-4916-b748-4927b8c7a503',
+  '296c2dcc-f935-42c6-94ef-471fab2c1537',
+  'cdcc419e-dfa6-4581-bfe1-5ec984534bd3',
+  '43ec966d-a022-44a2-93ba-003cb9fdf300',
+  'fa7f9f68-45fd-45a5-86c4-3caa3edbe7c0',
+  'c473e195-65d7-407c-b64c-6a98feebf9a5',
+  '5ee25260-d470-4fbe-8e9c-cdae76dbace6',
+  '385e85e6-bdf1-4919-b061-c995c020dfff',
+  '387b98ed-08ce-4428-a588-22277f2ecc22',
+  'f08d2cd2-9d03-4121-b52e-f10c12738228',
+  '98a850bd-23d9-4fda-ba29-593ede1b59bd',
+  '5d685065-d60e-49b1-8c8e-78ae01eb667a',
+  '62e9cafd-90d4-4e17-96b1-59440deedfdd',
+  '4223a51f-871b-47cd-a8d2-656a438b9f3c',
+  '98561453-dfa1-4e34-9d4a-11cfc7eadc0a',
+  '3235b54e-00fb-443c-b8b7-44d9f066524c',
+  '0def326d-2282-48f1-ba41-85548850ca00',
+  '30f6c9f9-ed6a-41da-a178-c6348f846c3b',
+  '4cafff10-384f-46a7-97fd-342db54c4fd3',
+  '75db21b2-e3ab-4f06-9eff-d72030515bc3',
+  '050e1a6f-1ed7-40c0-a658-e6ddc3d4e609',
+  '4e423520-1368-46f1-adb8-5eeaf11e2810',
+  '6d2929e5-e32d-4f12-b190-c7aa1448112c',
+  'ef693a24-684b-48fe-8831-9d90a6ebd612',
+  '4d19e3f3-7e89-46a6-9f76-748cef8f5f12',
+  '6c4faabb-46e7-464f-ae66-58c1a2c4cdef',
+  '6122c3b7-3b3b-4c6b-a501-f055f5f275b8',
+  '57b2bdbe-2e20-4e04-a87b-f507996753b3',
+  '805e71b8-587f-4506-b9c8-f166faf9d874',
+  '0344c45c-22e6-4aef-96d4-1a0b5900ab38',
+  '74e714ec-7aac-41ff-be9c-90dc0512cc20',
+  'd5dd721b-daeb-4d6b-ad40-a5b838247da9',
+  '114acba7-634e-4a3a-a740-b1b436d2fdae',
+  'eeb38e1a-0f03-47ff-8961-d85df0f7b436',
+  '3b993020-9f4e-4bd3-9f2e-6a2a114f185a',
+  '5ffefaeb-747b-48b2-b34d-45972705d7de',
+  '284f5832-2b8a-4f4e-bd9e-618e529e6930',
+  'a1e6bad0-987c-46f7-9921-847a9cd53aec',
+  '95b84f8d-6bef-4084-a4c6-526548023fab',
+  '16a7543f-16d9-4967-b1b8-f80b77f80f7e',
+]);
+
+// Conflict edges (8 pairs from claim_conflicts table)
+const CONFLICTS = [
+  ['0a3745e8','450741ce'],['3c873673','0a3745e8'],['0540cd18','c2b542a9'],
+  ['3c873673','450741ce'],['8d97f51d','39832bd6'],['3250db5f','b2ce1c26'],
+  ['31f90c01','50a3da9d'],['f4443e3e','b526747e'],
+];
+
+// Known claim details (for tooltip — Phase 5 reference entries)
+const KNOWN = {
+  'de61fce1-8cda-4a3e-844b-c7eb5dc1f007':{ s:'Federal Reserve', r:'held_rate_at', o:'4.25–4.50%' },
+  '0db7e988-7736-4387-8a0e-7e7569d2a947':{ s:'Gold price', r:'exceeded', o:'$3,200/troy oz' },
+  'cffe3730-2d87-4e15-be35-66e5d48cb1a6':{ s:'Bitcoin spot ETFs', r:'recorded_inflows', o:'$2.3B over 5 days' },
+  '8103a3b0-522c-429e-baf6-1770bf0e8115':{ s:'S&P 500 Q1 2026', r:'beat_estimates_by', o:'8.4% avg' },
+  'b24f75f1-8f7b-4a13-bc65-53a27a185a8d':{ s:'EUR/USD', r:'tested_support_at', o:'1.08' },
+  '2e1522c3-b029-4765-a196-fe19d4065ff3':{ s:'Microsoft Azure', r:'reported_cloud_revenue', o:'$19B Q1 2026' },
+  'c72f2788-8fb7-4c76-b369-a429d0db9571':{ s:'NVIDIA revenue', r:'grew_by', o:'78% YoY' },
+  '7b09779a-ff9f-4903-94e9-bf50f88458a0':{ s:'Logical qubits', r:'achieved_fidelity_of', o:'99.9%' },
+  'c1a3e2b7-0f95-4910-9242-9c87bac6ccde':{ s:'CRISPR base editing', r:'corrected_variant_in', o:'12 TTR patients' },
+  'ece91b53-05a4-42f5-a323-62d4d9e58999':{ s:'JWST', r:'detected', o:'DMS on K2-18b' },
+  'a5061ca2-41e8-4e7d-9135-04e5748718f4':{ s:'ABT-263 senolytic', r:'reduced_cells_by', o:'67% in mice' },
+  '4d88c16a-bf9d-46e8-807e-dc1efd8ddf13':{ s:'Bilayer graphene', r:'exhibits', o:'Majorana zero modes' },
+  'b35bfefc-69e1-473f-b8c8-de22c2fc3b53':{ s:'NVIDIA B300', r:'delivers', o:'8 PFLOPS BF16' },
+  'be965308-af66-45cf-bbcd-6ba0c91d27cd':{ s:'Apple Vision Pro 2', r:'weighs', o:'45g / 14h battery' },
+  '11a786b2-b41c-45cf-a322-ab160afb4035':{ s:'Starlink V3', r:'delivers', o:'2Gbps / 8ms' },
+  '70c27d20-8a69-4642-aa27-561807d8af51':{ s:'Figure AI robots', r:'achieved', o:'94% BMW task completion' },
+  'd6ed9d7c-f9af-477e-b111-3b1c9ec40e66':{ s:'CoT LLMs+tools', r:'solved_at', o:'91% IMO accuracy' },
+  'e0c2eec3-dab6-476d-8918-9ac244b81384':{ s:'TSMC 2nm', r:'entered', o:'volume production' },
+};
+
+// ─── SEEDED RNG ───────────────────────────────────────────────────────────────
+function mkRng(seed) {
+  let s = (seed | 0) + 1;
+  return () => {
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b);
+    s = Math.imul(s ^ (s >>> 15), 0x1b873593);
+    s ^= s >>> 16;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+// ─── GENERATE NODE POSITIONS ──────────────────────────────────────────────────
+function buildNodes() {
+  const nodes = [];
+  const byId  = {};
+  const GA    = 2.399963229; // golden angle
+
+  const TIER2_ARR = [...TIER2_IDS]; // ordered array for index-based distribution
+
+  DOMAIN_NAMES.forEach((domain, di) => {
+    const o   = OUTCOMES[domain];
+    const rng = mkRng(di * 91111 + 7);
+    const cx  = CLUSTER_CX[domain];
+
+    // Build shuffled status array
+    const statArr = [
+      ...Array(o.confirmed).fill('confirmed'),
+      ...Array(o.invalidated).fill('invalidated'),
+      ...Array(o.unverified).fill('unverified'),
+    ];
+    for (let i = statArr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [statArr[i], statArr[j]] = [statArr[j], statArr[i]];
+    }
+
+    // Phase 6 distribution: finance=1 (idx 0), science=7 (idx 1-7), technology=45 (idx 8-52)
+    const tier2List = TIER2_ARR.filter((_, idx) => {
+      if (domain === 'finance')     return idx < 1;
+      if (domain === 'science')     return idx >= 1 && idx < 8;
+      if (domain === 'technology')  return idx >= 8;
+    });
+
+    for (let i = 0; i < o.total; i++) {
+      const spread = 0.82 + rng() * 0.36;
+      const r = BASE_RADIUS * Math.sqrt((i + 0.7) / o.total) * spread;
+      const theta = i * GA + (rng() - 0.5) * 0.18;
+      const nx = cx + r * Math.cos(theta);
+      const ny = CLUSTER_CY + r * Math.sin(theta) * 0.82;
+      const conf = 0.70 + rng() * 0.29;
+      const status = statArr[i] || 'unverified';
+
+      const id = tier2List[i] || `${domain}-${i}`;
+      const node = { id, domain, status, conf, nx, ny, isTier2: TIER2_IDS.has(id) };
+      nodes.push(node);
+      byId[id] = node;
+    }
+  });
+
+  return { nodes, byId };
+}
+
+const { nodes: ALL_NODES, byId: NODE_MAP } = buildNodes();
+const TOTAL = ALL_NODES.length; // 984
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App() {
+  const containerRef = useRef(null);
+  const [svgW, setSvgW] = useState(900);
+  const [svgH, setSvgH] = useState(520);
+  const [vis,  setVis]  = useState({ finance:true, science:true, technology:true });
+  const [onlyTier2,      setOnlyTier2]      = useState(false);
+  const [onlyAdversarial, setOnlyAdversarial] = useState(false);
+  const [showConflict,   setShowConflict]   = useState(true);
+  const [hovered,  setHovered]  = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [tipPos,   setTipPos]   = useState({ x:0, y:0 });
+
+  useEffect(() => {
+    const obs = new ResizeObserver(([e]) => {
+      setSvgW(e.contentRect.width);
+      setSvgH(e.contentRect.height);
+    });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const px = (nx) => nx * svgW;
+  const py = (ny) => ny * svgH;
+
+  const filterActive = onlyTier2 || onlyAdversarial;
+  const visible = useMemo(() =>
+    ALL_NODES.filter(n => vis[n.domain] && (!filterActive || n.isTier2)),
+    [vis, onlyTier2, onlyAdversarial]
+  );
+
+  const totalC = Object.values(OUTCOMES).reduce((a,o) => a+o.confirmed,0);
+  const totalI = Object.values(OUTCOMES).reduce((a,o) => a+o.invalidated,0);
+  const totalU = Object.values(OUTCOMES).reduce((a,o) => a+o.unverified,0);
+
+  return (
+    <div className="canvas-container">
+
+      {/* ── PHASE 6 BANNER ── */}
+      <div className="tier2-banner">
+        <div className="tier2-badge">PHASE 6 LIVE</div>
+        {DOMAIN_NAMES.map(d => {
+          const t = TRUST[d];
+          const isT1 = t.tier === 1;
+          return (
+            <React.Fragment key={d}>
+              <div className={`tier2-stat ${isT1 ? 't1' : ''}`}>
+                {d} <span>{(t.score*100).toFixed(2)}%</span>
+                {isT1
+                  ? <span style={{fontSize:9,marginLeft:3,color:'#FF5D38'}}>T1↓</span>
+                  : <span style={{fontSize:9,marginLeft:3,color:'#2ea043'}}>T2✓</span>
+                }
+              </div>
+              {d !== 'technology' && <span className="tier2-sep">·</span>}
+            </React.Fragment>
+          );
+        })}
+        <span className="tier2-sep">·</span>
+        <div className="tier2-stat">window <span>1000</span></div>
+        <span className="tier2-sep">·</span>
+        <div className="tier2-stat">clean clock <span>2026-03-24</span></div>
+        <div className="autonomous-badge">🛡 53 adversarial_survived · promoted_by=jarvis_tier2</div>
+      </div>
+
+      {/* ── CONTROLS ── */}
+      <div className="controls">
+        <div className="ctrl-group">
+          <span className="ctrl-label">Domain</span>
+          {DOMAIN_NAMES.map(d => (
+            <button key={d}
+              className={`toggle-btn ${d} ${vis[d]?'active':''}`}
+              onClick={() => setVis(v=>({...v,[d]:!v[d]}))}
+            >{d} <span style={{fontSize:9,opacity:.7}}>({OUTCOMES[d].total})</span></button>
+          ))}
+        </div>
+        <div className="divider"/>
+        <div className="ctrl-group">
+          <button className={`toggle-btn jarvis ${onlyTier2?'active':''}`}
+            onClick={() => { setOnlyTier2(v=>!v); setOnlyAdversarial(false); }}>
+            ⚡ tier2 only
+          </button>
+          <button className={`toggle-btn adversarial ${onlyAdversarial?'active':''}`}
+            onClick={() => { setOnlyAdversarial(v=>!v); setOnlyTier2(false); }}>
+            🛡 adversarial filter
+          </button>
+          <button className={`toggle-btn conflict ${showConflict?'active':''}`}
+            onClick={() => setShowConflict(v=>!v)}>
+            conflict edges
+          </button>
+        </div>
+        <div className="stats-bar">
+          <div className="stat-pill stat-confirmed">✓ {totalC}</div>
+          <div className="stat-pill stat-invalidated">✗ {totalI}</div>
+          {totalU > 0 && <div className="stat-pill stat-unverified">? {totalU}</div>}
+          <div className="stat-pill" style={{background:'rgba(255,215,0,0.1)',color:'#FFD700',border:'1px solid rgba(255,215,0,0.25)'}}>
+            ⚡ 53
+          </div>
+          <div className="stat-pill" style={{background:'rgba(0,217,255,0.08)',color:'#00D9FF',border:'1px solid rgba(0,217,255,0.2)'}}>
+            🛡 53
+          </div>
+        </div>
+      </div>
+
+      {/* ── MAIN AREA ── */}
+      <div className="main-area">
+        <div className="svg-area" ref={containerRef} onMouseLeave={()=>setHovered(null)}>
+          <svg width={svgW} height={svgH}>
+            <defs>
+              {DOMAIN_NAMES.map(d => (
+                <radialGradient key={d} id={`bg-${d}`} cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor={DOMAIN_COLORS[d]} stopOpacity="0.55"/>
+                  <stop offset="100%" stopColor={DOMAIN_COLORS[d]} stopOpacity="0"/>
+                </radialGradient>
+              ))}
+              <filter id="t2glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.8" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="advglow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="1.2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            {/* Cluster glow backgrounds */}
+            {DOMAIN_NAMES.filter(d=>vis[d]).map(d => {
+              const r = BASE_RADIUS * svgW * 1.3;
+              return <ellipse key={d}
+                cx={px(CLUSTER_CX[d])} cy={py(CLUSTER_CY)}
+                rx={r} ry={r*0.76}
+                fill={`url(#bg-${d})`} opacity={0.07}/>;
+            })}
+
+            {/* Finance T1 demotion glow — subtle red haze */}
+            {vis.finance && (
+              <ellipse
+                cx={px(CLUSTER_CX.finance)} cy={py(CLUSTER_CY)}
+                rx={BASE_RADIUS*svgW*0.88} ry={BASE_RADIUS*svgW*0.67}
+                fill="none" stroke="#FF5D38" strokeWidth={1.2}
+                strokeDasharray="8,4" opacity={0.18}/>
+            )}
+
+            {/* Domain labels */}
+            {DOMAIN_NAMES.filter(d=>vis[d]).map(d => {
+              const isT1 = TRUST[d].tier === 1;
+              return (
+                <g key={d}>
+                  <text
+                    x={px(CLUSTER_CX[d])} y={22}
+                    textAnchor="middle" fill={DOMAIN_COLORS[d]}
+                    opacity={0.45} fontSize={10} fontFamily="'SF Mono',monospace"
+                    letterSpacing={2}>{d.toUpperCase()}</text>
+                  {isT1 && (
+                    <text
+                      x={px(CLUSTER_CX[d])} y={33}
+                      textAnchor="middle" fill="#FF5D38"
+                      opacity={0.7} fontSize={8} fontFamily="'SF Mono',monospace">
+                      TIER 1 ↓
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Tier 2 threshold ring (dashed ellipse at 85% radius) */}
+            {DOMAIN_NAMES.filter(d=>vis[d]).map(d => {
+              const r = BASE_RADIUS * svgW * 0.92;
+              return <ellipse key={`t2-${d}`}
+                cx={px(CLUSTER_CX[d])} cy={py(CLUSTER_CY)}
+                rx={r} ry={r*0.76}
+                fill="none" stroke="#2ea043" strokeWidth={0.6}
+                strokeDasharray="5,3" opacity={0.3}/>;
+            })}
+
+            {/* Conflict edges */}
+            {showConflict && CONFLICTS.map(([a,b], i) => {
+              const src = ALL_NODES.find(n => n.id.startsWith(a));
+              const tgt = ALL_NODES.find(n => n.id.startsWith(b));
+              if (!src || !tgt) return null;
+              if (!vis[src.domain] || !vis[tgt.domain]) return null;
+              return <line key={i}
+                x1={px(src.nx)} y1={py(src.ny)}
+                x2={px(tgt.nx)} y2={py(tgt.ny)}
+                stroke="#FF6B6B" strokeWidth={0.8}
+                strokeDasharray="3,3" opacity={0.45}/>;
+            })}
+
+            {/* Nodes — non-tier2 first, then tier2 on top */}
+            {[...visible.filter(n=>!n.isTier2), ...visible.filter(n=>n.isTier2)].map(node => {
+              const x = px(node.nx);
+              const y = py(node.ny);
+              const col = DOMAIN_COLORS[node.domain];
+              const r = 1.4 + node.conf * 2.6;
+              const op = node.status==='confirmed' ? 0.82
+                : node.status==='invalidated' ? 0.22 : 0.45;
+              const isHov = hovered?.id === node.id;
+              const isSel = selected?.id === node.id;
+
+              return (
+                <g key={node.id}
+                  onMouseMove={e => { setHovered(node); setTipPos({x:e.clientX+14,y:e.clientY-10}); }}
+                  onMouseLeave={() => setHovered(null)}
+                  onClick={() => setSelected(node === selected ? null : node)}
+                  style={{cursor:'pointer'}}
+                >
+                  {/* Tier2 gold ring */}
+                  {node.isTier2 && (
+                    <circle cx={x} cy={y} r={r+2.8}
+                      fill="none" stroke="#FFD700" strokeWidth={1.1}
+                      opacity={0.65} filter="url(#t2glow)"/>
+                  )}
+                  {/* Adversarial survived — cyan inner ring */}
+                  {node.isTier2 && (
+                    <circle cx={x} cy={y} r={r-0.4}
+                      fill="none" stroke="#00D9FF" strokeWidth={0.55}
+                      opacity={0.6} filter="url(#advglow)"/>
+                  )}
+                  {/* Hover / select ring */}
+                  {(isHov || isSel) && (
+                    <circle cx={x} cy={y} r={r+4}
+                      fill="none" stroke={col} strokeWidth={0.9} opacity={0.55}/>
+                  )}
+                  {/* Node */}
+                  <circle cx={x} cy={y} r={r} fill={col} opacity={op}/>
+                  {/* Invalidated outline */}
+                  {node.status==='invalidated' && (
+                    <circle cx={x} cy={y} r={r}
+                      fill="none" stroke="#f85149" strokeWidth={0.7} opacity={0.35}/>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Tier 2 threshold label */}
+            {vis.finance && (
+              <text
+                x={px(CLUSTER_CX.finance) - BASE_RADIUS*svgW*0.92 - 4}
+                y={py(CLUSTER_CY)+3}
+                fill="#2ea043" fontSize={8} textAnchor="end" opacity={0.55}>85%</text>
+            )}
+          </svg>
+
+          {/* Tooltip */}
+          {hovered && (
+            <div className="tooltip" style={{left:tipPos.x, top:tipPos.y}}>
+              {KNOWN[hovered.id] ? (
+                <>
+                  <div style={{fontWeight:600,color:'#E6EDF3',marginBottom:2}}>{KNOWN[hovered.id].s}</div>
+                  <div style={{color:'#8B949E',fontSize:10}}>{KNOWN[hovered.id].r} → {KNOWN[hovered.id].o}</div>
+                </>
+              ) : (
+                <div style={{color:DOMAIN_COLORS[hovered.domain]}}>{hovered.domain} claim</div>
+              )}
+              <div style={{marginTop:4,fontSize:10,color:'#8B949E'}}>
+                conf {(hovered.conf*100).toFixed(1)}%&nbsp;·&nbsp;
+                <span style={{color:hovered.status==='confirmed'?'#56d364':hovered.status==='invalidated'?'#f85149':'#8B949E'}}>
+                  {hovered.status}
+                </span>
+                {hovered.isTier2 && <span style={{color:'#FFD700',marginLeft:4}}>⚡ jarvis_tier2</span>}
+                {hovered.isTier2 && <span style={{color:'#00D9FF',marginLeft:4}}>🛡 survived</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── SIDE PANEL ── */}
+        <div className="side-panel">
+          {/* Trust scores */}
+          <div className="panel-section">
+            <div className="panel-title">Trust Scores (rolling w=1000)</div>
+            {DOMAIN_NAMES.map(d => {
+              const t = TRUST[d];
+              const isT1 = t.tier === 1;
+              const delta = t.score - t.p5score;
+              const deltaStr = (delta >= 0 ? '+' : '') + (delta*100).toFixed(2) + '%';
+              return (
+                <div key={d} className="trust-bar-row">
+                  <div className="trust-bar-label">
+                    <span style={{color:DOMAIN_COLORS[d],fontSize:11}}>{d}</span>
+                    <span style={{display:'flex',alignItems:'center',gap:4}}>
+                      <span style={{fontSize:9,color:delta>=0?'#56d364':'#f85149',opacity:.8}}>{deltaStr}</span>
+                      <span style={{color:isT1?'#FF5D38':DOMAIN_COLORS[d],fontSize:11,fontWeight:700}}>
+                        {(t.score*100).toFixed(2)}%
+                      </span>
+                      {isT1
+                        ? <span style={{color:'#FF5D38',fontSize:9}}>T1↓</span>
+                        : <span style={{color:'#2ea043',fontSize:9}}>T2✓</span>
+                      }
+                    </span>
+                  </div>
+                  <div className="trust-bar-track">
+                    <div className="trust-bar-fill"
+                      style={{width:`${t.score*100}%`,background:isT1?'#FF5D38':DOMAIN_COLORS[d],opacity:.65}}/>
+                    {/* Threshold marker at 85% */}
+                    <div style={{position:'absolute',left:'85%',top:-1,width:1,height:7,background:'#2ea043',opacity:0.7}}/>
+                    {/* Phase 5 ghost marker */}
+                    <div style={{
+                      position:'absolute',left:`${t.p5score*100}%`,top:-1,
+                      width:1,height:7,background:'#484F58',opacity:0.6
+                    }}/>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{fontSize:9,color:'#484F58',marginTop:5}}>
+              threshold line at 85.00% · ghost = Phase 5
+            </div>
+          </div>
+
+          {/* Outcome distribution */}
+          <div className="panel-section">
+            <div className="panel-title">Outcomes (all resolved)</div>
+            {DOMAIN_NAMES.map(d => {
+              const o = OUTCOMES[d];
+              return (
+                <div key={d} style={{marginBottom:9}}>
+                  <div style={{color:DOMAIN_COLORS[d],fontSize:10,marginBottom:3}}>{d}</div>
+                  {[['confirmed','#56d364',o.confirmed],['invalidated','#f85149',o.invalidated]].map(([s,c,n])=>(
+                    <div key={s} className="outcome-row">
+                      <div className="outcome-dot" style={{background:c}}/>
+                      <div className="outcome-bar-track">
+                        <div className="outcome-bar-fill" style={{width:`${n/o.total*100}%`,background:c,opacity:.75}}/>
+                      </div>
+                      <span className="outcome-count">{n}</span>
+                    </div>
+                  ))}
+                  <div style={{fontSize:9,color:'#484F58',marginTop:1}}>
+                    res: {(o.confirmed/o.total*100).toFixed(1)}% · {o.total} total
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Phase 6 Autonomous stats */}
+          <div className="panel-section">
+            <div className="panel-title">Phase 6 — Autonomous</div>
+            <div style={{fontSize:10,color:'#8B949E',lineHeight:1.8}}>
+              <div><span style={{color:'#FFD700'}}>53</span> promoted by jarvis_tier2</div>
+              <div style={{paddingLeft:8}}><span style={{color:'#4488FF'}}>1</span> finance <span style={{color:'#FF5D38',fontSize:9}}>T1↓</span></div>
+              <div style={{paddingLeft:8}}><span style={{color:'#FF8844'}}>7</span> science</div>
+              <div style={{paddingLeft:8}}><span style={{color:'#AA44FF'}}>45</span> technology</div>
+              <div style={{marginTop:3,borderTop:'1px solid #21262D',paddingTop:3}}>
+                <div><span style={{color:'#00D9FF'}}>53</span> adversarial_survived</div>
+                <div><span style={{color:'#484F58'}}> 0</span> vulnerable / compromised</div>
+                <div><span style={{color:'#FF6B6B'}}>8</span> conflict edges</div>
+              </div>
+              <div style={{marginTop:3,borderTop:'1px solid #21262D',paddingTop:3}}>
+                <div style={{color:'#484F58',fontSize:9}}>90-day clean clock</div>
+                <div style={{fontSize:9}}>
+                  start: <span style={{color:'#E6EDF3'}}>2026-03-24</span>
+                </div>
+                <div style={{fontSize:9}}>
+                  target: <span style={{color:'#2ea043'}}>2026-06-22</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="panel-section">
+            <div className="panel-title">Legend</div>
+            <div className="legend-row"><div className="legend-dot" style={{background:'#56d364'}}/> confirmed</div>
+            <div className="legend-row"><div className="legend-dot" style={{background:'#f85149',opacity:.35}}/> invalidated</div>
+            <div className="legend-row"><div className="legend-ring"/> jarvis_tier2 (gold ring)</div>
+            <div className="legend-row">
+              <div style={{width:10,height:10,borderRadius:'50%',border:'2px solid #00D9FF',flexShrink:0,background:'transparent'}}/>
+              adversarial shield (cyan)
+            </div>
+            <div className="legend-row">
+              <div style={{width:16,height:0,borderTop:'1px dashed #FF6B6B',opacity:.6,flexShrink:0}}/>
+              conflict edge
+            </div>
+            <div className="legend-row">
+              <div style={{width:16,height:0,borderTop:'1px dashed #2ea043',opacity:.5,flexShrink:0}}/>
+              Tier 2 threshold (85%)
+            </div>
+            <div className="legend-row">
+              <div style={{width:16,height:0,borderTop:'1px dashed #FF5D38',opacity:.4,flexShrink:0}}/>
+              finance T1 demotion ring
+            </div>
+            <div className="pipeline-row">
+              <div style={{color:'#6E7681',marginBottom:2}}>6-AGENT PIPELINE</div>
+              <span className="pipeline-step">Vanguard</span>
+              <span className="pipeline-arrow"> → </span>
+              <span className="pipeline-step">Skeptic</span>
+              <span className="pipeline-arrow"> → </span>
+              <span className="pipeline-step">Advocate</span>
+              <span className="pipeline-arrow"> → </span>
+              <br/>
+              <span className="pipeline-step">Jarvis</span>
+              <span className="pipeline-arrow"> → </span>
+              <span className="pipeline-step adv">Adversarial</span>
+              <span className="pipeline-arrow"> → </span>
+              <span className="pipeline-step" style={{color:'#FFD700'}}>Promote</span>
+            </div>
+          </div>
+
+          {/* Inspect */}
+          <div style={{flex:1,padding:10,overflow:'auto'}}>
+            <div className="panel-title">Inspect</div>
+            {!selected ? (
+              <div className="inspect-empty">Click a node to inspect</div>
+            ) : (
+              <>
+                <div className="inspect-field">
+                  <div className="inspect-key">domain</div>
+                  <div className="inspect-val" style={{color:DOMAIN_COLORS[selected.domain]}}>
+                    {selected.domain}
+                    {TRUST[selected.domain].tier === 1 &&
+                      <span style={{color:'#FF5D38',fontSize:9,marginLeft:4}}>TIER 1</span>}
+                  </div>
+                </div>
+                <div className="inspect-field">
+                  <div className="inspect-key">confidence</div>
+                  <div className="inspect-val">{(selected.conf*100).toFixed(1)}%</div>
+                </div>
+                <div className="inspect-field">
+                  <div className="inspect-key">outcome</div>
+                  <span className={`inspect-badge badge-${selected.status}`}>{selected.status}</span>
+                </div>
+                {selected.isTier2 && (
+                  <>
+                    <div className="inspect-field">
+                      <div className="inspect-key">promoted_by</div>
+                      <span className="inspect-badge badge-jarvis">⚡ jarvis_tier2</span>
+                    </div>
+                    <div className="inspect-field">
+                      <div className="inspect-key">adversarial</div>
+                      <span className="inspect-badge badge-adv">🛡 survived</span>
+                    </div>
+                  </>
+                )}
+                {KNOWN[selected.id] && (
+                  <>
+                    <div className="inspect-field">
+                      <div className="inspect-key">subject</div>
+                      <div className="inspect-val">{KNOWN[selected.id].s}</div>
+                    </div>
+                    <div className="inspect-field">
+                      <div className="inspect-key">relation</div>
+                      <div className="inspect-val">{KNOWN[selected.id].r}</div>
+                    </div>
+                    <div className="inspect-field">
+                      <div className="inspect-key">object</div>
+                      <div className="inspect-val">{KNOWN[selected.id].o}</div>
+                    </div>
+                  </>
+                )}
+                <div className="inspect-field" style={{marginTop:8}}>
+                  <div className="inspect-key">id</div>
+                  <div style={{fontSize:9,color:'#484F58',wordBreak:'break-all'}}>{selected.id}</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── FOOTER ── */}
+      <div className="footer-bar">
+        <span>NOOSPHERE v2</span>
+        <span className="tier2-sep">·</span>
+        <span>corpus: <span className="footer-val" style={{color:'#58A6FF',fontWeight:700}}>{TOTAL}</span> claims</span>
+        <span className="tier2-sep">·</span>
+        <span>showing: <span className="footer-val">{visible.length}</span></span>
+        <span className="tier2-sep">·</span>
+        <span>tier2: <span className="footer-val" style={{color:'#FFD700'}}>53</span></span>
+        <span className="tier2-sep">·</span>
+        <span>adversarial: <span className="footer-val" style={{color:'#00D9FF'}}>53/53 survived</span></span>
+        <span className="tier2-sep">·</span>
+        <span>finance: <span className="footer-val" style={{color:'#FF5D38'}}>TIER 1 ↓</span></span>
+        <span style={{marginLeft:'auto',color:'#484F58'}}>Phase 6 · cycles 17-22 · 2026-03-24</span>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
