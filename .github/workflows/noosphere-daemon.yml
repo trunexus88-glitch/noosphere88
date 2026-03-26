@@ -14,8 +14,11 @@ on:
       health_only:
         description: 'Health check only (no pipeline)'
         required: false
-        type: boolean
-        default: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   pipeline:
@@ -47,15 +50,15 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Health check only
-        if: ${{ inputs.health_only == true }}
+        if: inputs.health_only == 'true'
         run: python noosphere_daemon.py --health
 
       - name: Run single step
-        if: ${{ inputs.health_only != true && inputs.step != '' }}
+        if: inputs.health_only != 'true' && inputs.step != ''
         run: python noosphere_daemon.py --step ${{ inputs.step }}
 
       - name: Run full pipeline cycle
-        if: ${{ inputs.health_only != true && inputs.step == '' }}
+        if: inputs.health_only != 'true' && inputs.step == ''
         run: python noosphere_daemon.py
 
       - name: Upload cycle log
