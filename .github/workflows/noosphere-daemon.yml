@@ -2,14 +2,14 @@ name: Noosphere Pipeline Daemon
 
 on:
   schedule:
-    # Run at 06:00 UTC and 18:00 UTC every day
-    - cron: '0 6,18 * * *'
+    - cron: '0 6 * * *'
+    - cron: '0 18 * * *'
   workflow_dispatch:
-    # Manual trigger with optional step override
     inputs:
       step:
         description: 'Run only this step (1-13), leave blank for full cycle'
         required: false
+        default: ''
         type: string
       health_only:
         description: 'Health check only (no pipeline)'
@@ -41,21 +41,22 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install supabase anthropic
+        run: pip install -r requirements.txt
 
-      - name: Run health check
+      - name: Health check only
         if: ${{ inputs.health_only == true }}
         run: python noosphere_daemon.py --health
 
-      - name: Run pipeline cycle (full)
-        if: ${{ inputs.health_only != true && inputs.step == '' }}
-        run: python noosphere_daemon.py
-
-      - name: Run pipeline step
+      - name: Run single step
         if: ${{ inputs.health_only != true && inputs.step != '' }}
         run: python noosphere_daemon.py --step ${{ inputs.step }}
+
+      - name: Run full pipeline cycle
+        if: ${{ inputs.health_only != true && inputs.step == '' }}
+        run: python noosphere_daemon.py
 
       - name: Upload cycle log
         if: always()
