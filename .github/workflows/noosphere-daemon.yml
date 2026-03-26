@@ -50,15 +50,15 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Health check only
-        if: inputs.health_only == 'true'
+        if: ${{ github.event.inputs.health_only == 'true' }}
         run: python noosphere_daemon.py --health
 
       - name: Run single step
-        if: inputs.health_only != 'true' && inputs.step != ''
-        run: python noosphere_daemon.py --step ${{ inputs.step }}
+        if: ${{ github.event.inputs.health_only != 'true' && github.event.inputs.step != '' }}
+        run: python noosphere_daemon.py --step ${{ github.event.inputs.step }}
 
       - name: Run full pipeline cycle
-        if: inputs.health_only != 'true' && inputs.step == ''
+        if: ${{ github.event.inputs.health_only != 'true' && (github.event.inputs.step == '' || github.event_name == 'schedule') }}
         run: python noosphere_daemon.py
 
       - name: Upload cycle log
