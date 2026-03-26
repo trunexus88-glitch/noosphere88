@@ -1,40 +1,16 @@
 name: Noosphere Pipeline Daemon
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 6 * * *'
     - cron: '0 18 * * *'
-  workflow_dispatch:
-    inputs:
-      step:
-        description: 'Run only this step (1-13), leave blank for full cycle'
-        required: false
-        default: ''
-        type: string
-      health_only:
-        description: 'Health check only (no pipeline)'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 jobs:
   pipeline:
     name: Pipeline Cycle
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      DAEMON_BATCH_SIZE: '20'
-      DAEMON_PROMOTION_THRESHOLD: '0.90'
-      DAEMON_AUDIT_SAMPLE_RATE: '0.10'
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,16 +25,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Health check only
-        if: inputs.health_only == 'true'
-        run: python noosphere_daemon.py --health
-
-      - name: Run single step
-        if: inputs.health_only != 'true' && inputs.step != ''
-        run: python noosphere_daemon.py --step ${{ inputs.step }}
-
       - name: Run full pipeline cycle
-        if: inputs.health_only != 'true' && inputs.step == ''
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          DAEMON_BATCH_SIZE: '20'
+          DAEMON_PROMOTION_THRESHOLD: '0.90'
+          DAEMON_AUDIT_SAMPLE_RATE: '0.10'
         run: python noosphere_daemon.py
 
       - name: Upload cycle log
